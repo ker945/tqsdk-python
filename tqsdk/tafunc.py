@@ -807,14 +807,14 @@ def barlast(cond):
         api.close()
 
     """
-    cond = cond.to_numpy()
-    v = np.array(~cond, dtype=np.int)
-    c = np.cumsum(v)
-    x = c[cond]
-    d = np.diff(np.concatenate(([0], x)))
+    cond = cond.to_numpy()  # 将定义的条件设置为numpy的Series类型。条件如：kls['dd']==True，返回序列。
+    v = np.array(~cond, dtype=np.int)  # 将条件序列的True/False转换为1/0的整数值序列，输出如：[0,1,1,0,1,0,1...]
+    c = np.cumsum(v)  # 默认按行进行累加,输出如：[0,1,2,2,3,3,4...]
+    x = c[cond]  # 筛选只取出来条件为True的累加的数字。注意：索引0是刚开始条件还不满足的周期数。
+    d = np.diff(np.concatenate(([0], x)))  # np.concatenate()默认横向拼接序列X前+上序列元素0，然后,np.diff()函数就是执行参数序列的后一个元素减去前一个元素。
     if len(d) == 0:  # 如果cond长度为0或无True
         return pd.Series([-1] * len(cond))
-    v[cond] = -d
-    r = np.cumsum(v)
-    r[:x[0]] = -1
-    return pd.Series(r)
+    v[cond] = -d  # 给所有v的True位置赋值diff差值数据,返回一个新的Series,用于接着累加
+    r = np.cumsum(v)  # 将差值进行再原条件的序列位置上赋值以后，进行累加得到上一次True的次数。
+    r[:x[0]] = -1  # 将最前期条件为False的索引设置为-1
+    return pd.Series(r)  # 最终返回Series序列，最前面不满足条件时为-1，满足条件当日为0，然后计数开始往复。
